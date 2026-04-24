@@ -29,25 +29,48 @@ roundId + "_" + participant
 
 ---
 
-##  Architecture
+## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Spring Boot Application                     │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌──────────────┐    ┌──────────────────┐    ┌───────────────┐  │
-│  │  QuizRunner   │───▶│   QuizService    │───▶│ QuizApiClient │  │
-│  │ (Startup)     │    │ (Business Logic) │    │ (HTTP Calls)  │  │
-│  └──────────────┘    └──────────────────┘    └───────┬───────┘  │
-│                              │                       │          │
-│                              ▼                       ▼          │
-│                      ┌──────────────┐      ┌─────────────────┐  │
-│                      │    Models     │      │  External Quiz  │  │
-│                      │ (DTOs/POJOs) │      │      API        │  │
-│                      └──────────────┘      └─────────────────┘  │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+### System Architecture
+
+```mermaid
+graph TB
+    subgraph SpringBoot["Spring Boot Application"]
+        QA["QuizApplication<br/><i>Entry Point</i>"]
+        QR["QuizRunner<br/><i>CommandLineRunner</i>"]
+        QS["QuizService<br/><i>Business Logic</i>"]
+        QC["QuizApiClient<br/><i>HTTP Client + Retry</i>"]
+
+        subgraph Models["Model Layer (DTOs)"]
+            QE["QuizEvent"]
+            PR["PollResponse"]
+            LE["LeaderboardEntry"]
+            SR["SubmitRequest"]
+            SRes["SubmitResponse"]
+        end
+
+        AP["application.properties<br/><i>Externalized Config</i>"]
+    end
+
+    EXT["External Quiz API<br/>devapigw.vidalhealthtpa.com"]
+
+    QA --> QR
+    QR --> QS
+    QS --> QC
+    QC -- "GET /quiz/messages" --> EXT
+    QC -- "POST /quiz/submit" --> EXT
+    QS --> Models
+    AP -.-> QS
+    AP -.-> QC
+
+    style SpringBoot fill:#1a1a2e,stroke:#e94560,stroke-width:2px,color:#fff
+    style Models fill:#16213e,stroke:#0f3460,stroke-width:1px,color:#fff
+    style EXT fill:#e94560,stroke:#e94560,stroke-width:2px,color:#fff
+    style QA fill:#0f3460,stroke:#e94560,color:#fff
+    style QR fill:#0f3460,stroke:#e94560,color:#fff
+    style QS fill:#0f3460,stroke:#e94560,color:#fff
+    style QC fill:#0f3460,stroke:#e94560,color:#fff
+    style AP fill:#533483,stroke:#0f3460,color:#fff
 ```
 
 ### Component Breakdown
@@ -100,14 +123,38 @@ bajaj-quiz-leaderboard/
 
 ## Data Flow Pipeline
 
+```mermaid
+flowchart LR
+    A["POLL<br/>0 to 9<br/><i>5s delay</i>"] -->|Raw Events| B["COLLECT<br/>All Events<br/><i>ArrayList</i>"]
+    B -->|15 events| C["DEDUPLICATE<br/>roundId + participant<br/><i>HashSet</i>"]
+    C -->|10 unique| D["AGGREGATE<br/>Score per user<br/><i>HashMap.merge</i>"]
+    D -->|3 participants| E["SORT<br/>Descending<br/><i>Stream.sorted</i>"]
+    E -->|Ranked list| F["SUBMIT<br/>POST once<br/><i>Idempotent guard</i>"]
+
+    style A fill:#e94560,stroke:#e94560,color:#fff
+    style B fill:#0f3460,stroke:#0f3460,color:#fff
+    style C fill:#533483,stroke:#533483,color:#fff
+    style D fill:#0f3460,stroke:#0f3460,color:#fff
+    style E fill:#533483,stroke:#533483,color:#fff
+    style F fill:#e94560,stroke:#e94560,color:#fff
 ```
-┌───────┐     ┌───────┐     ┌───────────┐     ┌──────┐     ┌────────┐
-│ POLL  │────▶│COLLECT│────▶│DEDUPLICATE│────▶│ SORT │────▶│ SUBMIT │
-│(0..9) │     │Events │     │& Aggregate│     │ Desc │     │ Once   │
-└───────┘     └───────┘     └───────────┘     └──────┘     └────────┘
-  5s gap        Raw           HashSet           Stream       POST
-  between       events        tracking          sorted       with
-  each          list          seen keys         by score     guard
+
+### Deduplication Logic
+
+```mermaid
+flowchart TD
+    START["Receive Event"] --> BUILD["Build key:<br/>roundId + '_' + participant"]
+    BUILD --> CHECK{"Key in<br/>HashSet?"}
+    CHECK -->|Yes| SKIP["Skip duplicate"]
+    CHECK -->|No| ADD["Add to HashSet"]
+    ADD --> MERGE["HashMap.merge<br/>participant += score"]
+
+    style START fill:#0f3460,stroke:#0f3460,color:#fff
+    style BUILD fill:#533483,stroke:#533483,color:#fff
+    style CHECK fill:#e94560,stroke:#e94560,color:#fff
+    style SKIP fill:#c0392b,stroke:#c0392b,color:#fff
+    style ADD fill:#27ae60,stroke:#27ae60,color:#fff
+    style MERGE fill:#27ae60,stroke:#27ae60,color:#fff
 ```
 
 ### Step-by-Step:
