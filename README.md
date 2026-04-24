@@ -1,4 +1,4 @@
-# 🏆 Bajaj Finserv Health — Quiz Leaderboard System
+# Bajaj Finserv Health — Quiz Leaderboard System
 
 A production-quality **Spring Boot** backend application that consumes an external quiz API, processes score events with deduplication, generates a ranked leaderboard, and submits it for validation.
 
@@ -6,7 +6,7 @@ A production-quality **Spring Boot** backend application that consumes an extern
 
 ---
 
-## 📋 Problem Statement
+## Problem Statement
 
 The task is to build a backend system that:
 
@@ -29,7 +29,7 @@ roundId + "_" + participant
 
 ---
 
-## 🏗️ Architecture
+##  Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -64,7 +64,7 @@ roundId + "_" + participant
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 bajaj-quiz-leaderboard/
@@ -98,7 +98,7 @@ bajaj-quiz-leaderboard/
 
 ---
 
-## 🔄 Data Flow Pipeline
+## Data Flow Pipeline
 
 ```
 ┌───────┐     ┌───────┐     ┌───────────┐     ┌──────┐     ┌────────┐
@@ -121,7 +121,7 @@ bajaj-quiz-leaderboard/
 
 ---
 
-## ⚙️ Prerequisites
+## Prerequisites
 
 Before running this project, make sure you have:
 
@@ -151,7 +151,7 @@ sdk install maven
 
 ---
 
-## 🚀 How to Run
+## How to Run
 
 ### 1. Clone the Repository
 ```bash
@@ -206,7 +206,7 @@ The application will:
 
 ---
 
-## 🧪 Running Unit Tests
+## Running Unit Tests
 
 ```bash
 mvn test
@@ -223,7 +223,7 @@ mvn test
 
 ---
 
-## 🔑 Design Decisions
+## Design Decisions
 
 | Decision | Rationale |
 |----------|-----------|
@@ -237,7 +237,7 @@ mvn test
 
 ---
 
-## 📡 API Reference
+## API Reference
 
 ### Poll Endpoint
 ```
@@ -284,7 +284,7 @@ Content-Type: application/json
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Technology | Purpose |
 |-----------|---------|
@@ -297,12 +297,12 @@ Content-Type: application/json
 
 ---
 
-## 👤 Author
+## Author
 
-**Laksh** — Registration No: `RA2311003011748`
+**Lakshya Sabharwal** — Registration No: `RA2311003011748`
 
 ---
 
-## 📄 License
+## License
 
 This project is submitted as part of the Bajaj Finserv Health recruitment assignment.
